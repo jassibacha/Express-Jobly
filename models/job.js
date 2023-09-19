@@ -39,7 +39,7 @@ class Job {
 
     /** Find all jobs (optional filter on searchFilters).
      *
-     * searchFilters (all optional):
+     * searchFilters (ALL optional):
      * - minSalary
      * - hasEquity (true returns only jobs with equity > 0, other values ignored)
      * - title (will find case-insensitive, partial matches)
@@ -48,41 +48,38 @@ class Job {
      * */
 
     static async findAll(searchFilters = {}) {
-        let query = `SELECT id, title, salary, equity, company_handle AS "companyHandle"
-                    FROM jobs`;
+        //let query = `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs`;
+        let query = `SELECT j.id, j.title, j.salary, j.equity, j.company_handle AS "companyHandle", c.name AS "companyName"
+                    FROM jobs AS j
+                    JOIN companies AS c ON c.handle = j.company_handle`;
 
         // Create empty array for sql conditions and empty array for values of the conditions
         let conditions = [];
         let values = [];
 
-        // // Pull these from callback
-        // const { minEmployees, maxEmployees, name } = searchFilters;
+        // Pull these from callback
+        const { title, minSalary, hasEquity } = searchFilters;
 
-        // if (minEmployees > maxEmployees) {
-        //     throw new BadRequestError(
-        //         'Min employees cannot be greater than max'
-        //     );
-        // }
+        // For each possible search term, add to conditions and values
+        // Will be used to generate SQL
+        if (minSalary !== undefined) {
+            values.push(minSalary);
+            conditions.push(`salary >= $${values.length}`);
+        }
 
-        // // For each possible search term, add to conditions and values
-        // // Will be used to generate SQL
-        // if (minEmployees !== undefined) {
-        //     values.push(minEmployees);
-        //     conditions.push(`num_employees >= $${values.length}`);
-        // }
-        // if (maxEmployees != undefined) {
-        //     values.push(maxEmployees);
-        //     conditions.push(`num_employees <= $${values.length}`);
-        // }
-        // if (name) {
-        //     values.push(`%${name}%`); // Need this wrapped in %
-        //     conditions.push(`name ILIKE $${values.length}`);
-        // }
+        if (hasEquity === true) {
+            conditions.push(`equity > 0`);
+        }
 
-        // // Add whatever conditions in under WHERE
-        // if (conditions.length > 0) {
-        //     query += ' WHERE ' + conditions.join(' AND ');
-        // }
+        if (title !== undefined) {
+            values.push(`%${title}%`); // Need this wrapped in %
+            conditions.push(`title ILIKE $${values.length}`);
+        }
+
+        // Add whatever conditions in under WHERE
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
 
         // Finish the query
         query += ' ORDER BY title';
@@ -92,10 +89,10 @@ class Job {
         return jobsRes.rows;
     }
 
-    /** Given a company handle, return data about company.
+    /** Given a job id, return data about job.
      *
-     * Returns { id, title, salary, equity, company }
-     *   where company is [{ id, title, salary, equity, companyHandle }, ...]
+     * Returns { id, title, salary, equity, companyHandle, company }
+     *   where company is { handle, name, description, numEmployees, logoUrl }
      *
      * Throws NotFoundError if not found.
      **/
@@ -148,9 +145,9 @@ class Job {
         const idVarIdx = '$' + (values.length + 1);
 
         const querySql = `UPDATE jobs 
-                      SET ${setCols} 
-                      WHERE id = ${idVarIdx} 
-                      RETURNING id, title, salary, equity, company_handle AS "companyHandle"`;
+                        SET ${setCols} 
+                        WHERE id = ${idVarIdx} 
+                        RETURNING id, title, salary, equity, company_handle AS "companyHandle"`;
         const result = await db.query(querySql, [...values, id]);
         const job = result.rows[0];
 
@@ -167,9 +164,9 @@ class Job {
     static async remove(id) {
         const result = await db.query(
             `DELETE
-           FROM jobs
-           WHERE id = $1
-           RETURNING id`,
+            FROM jobs
+            WHERE id = $1
+            RETURNING id`,
             [id]
         );
         const job = result.rows[0];
