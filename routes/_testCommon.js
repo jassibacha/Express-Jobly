@@ -4,6 +4,7 @@ const db = require('../db.js');
 const User = require('../models/user');
 const Company = require('../models/company');
 const { createToken } = require('../helpers/tokens');
+const Job = require('../models/job.js');
 
 async function commonBeforeAll() {
     // noinspection SqlWithoutWhere
@@ -65,6 +66,12 @@ async function commonBeforeAll() {
         password: 'adminpassword',
         isAdmin: true,
     });
+    // Insert jobs and specify specific ID's as a query
+    await db.query(`
+    INSERT INTO jobs(id, title, salary, equity, company_handle)
+    VALUES (1, 'J1', 1000, '0.0', 'c1'),
+           (2, 'J2', 2000, '0.2', 'c2'),
+           (3, 'J3', 3000, '0.3', 'c3')`);
 }
 
 async function commonBeforeEach() {
