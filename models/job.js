@@ -48,7 +48,6 @@ class Job {
      * */
 
     static async findAll(searchFilters = {}) {
-        //let query = `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs`;
         let query = `SELECT j.id, j.title, j.salary, j.equity, j.company_handle AS "companyHandle", c.name AS "companyName"
                     FROM jobs AS j
                     JOIN companies AS c ON c.handle = j.company_handle`;
