@@ -205,6 +205,7 @@ describe('GET /users/:username', function () {
                 lastName: 'U1L',
                 email: 'user1@user.com',
                 isAdmin: false,
+                jobs: [],
             },
         });
     });
@@ -220,6 +221,23 @@ describe('GET /users/:username', function () {
                 lastName: 'U1L',
                 email: 'user1@user.com',
                 isAdmin: false,
+                jobs: [],
+            },
+        });
+    });
+
+    test('grab user with applications', async function () {
+        const resp = await request(app)
+            .get(`/users/u2`)
+            .set('authorization', `Bearer ${adminToken}`);
+        expect(resp.body).toEqual({
+            user: {
+                username: 'u2',
+                firstName: 'U2F',
+                lastName: 'U2L',
+                email: 'user2@user.com',
+                isAdmin: false,
+                jobs: [2, 3],
             },
         });
     });
