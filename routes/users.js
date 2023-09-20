@@ -95,7 +95,8 @@ router.post(
     async function (req, res, next) {
         try {
             await User.applyToJob(req.params.username, req.params.jobId);
-            return res.json({ applied: req.params.jobId });
+            const jobIdAsInt = parseInt(req.params.jobId, 10);
+            return res.json({ applied: jobIdAsInt });
         } catch (err) {
             return next(err);
         }

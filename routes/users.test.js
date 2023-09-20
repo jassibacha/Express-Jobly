@@ -377,3 +377,51 @@ describe('DELETE /users/:username', function () {
         expect(resp.statusCode).toEqual(404);
     });
 });
+
+/************************************** PATCH /users/:username */
+
+describe('POST /users/:username/jobs/:jobId', () => {
+    test('works for correct user', async function () {
+        const resp = await request(app)
+            .post(`/users/u1/jobs/1`)
+            .set('authorization', `Bearer ${u1Token}`);
+        expect(resp.body).toEqual({
+            applied: 1,
+        });
+    });
+
+    test('works for admins', async function () {
+        const resp = await request(app)
+            .post(`/users/u1/jobs/1`)
+            .set('authorization', `Bearer ${adminToken}`);
+        expect(resp.body).toEqual({
+            applied: 1,
+        });
+    });
+
+    test('unauth for incorrect user', async function () {
+        const resp = await request(app)
+            .post(`/users/admin/jobs/1`)
+            .set('authorization', `Bearer ${u1Token}`);
+        expect(resp.statusCode).toEqual(401);
+    });
+
+    test('unauth for anon', async function () {
+        const resp = await request(app).post(`/users/u1/jobs/1`);
+        expect(resp.statusCode).toEqual(401);
+    });
+
+    test('not found if no such user', async function () {
+        const resp = await request(app)
+            .post(`/users/nope/jobs/1`)
+            .set('authorization', `Bearer ${adminToken}`);
+        expect(resp.statusCode).toEqual(404);
+    });
+
+    test('not found if no such job', async function () {
+        const resp = await request(app)
+            .post(`/users/admin/jobs/0`)
+            .set('authorization', `Bearer ${adminToken}`);
+        expect(resp.statusCode).toEqual(404);
+    });
+});
